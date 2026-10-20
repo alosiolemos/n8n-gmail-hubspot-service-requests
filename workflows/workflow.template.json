@@ -1,0 +1,297 @@
+{
+  "name": "Solicitações por e-mail — Gmail → HubSpot — template público",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "options": {
+          "dataPropertyAttachmentsPrefixName": "attachment_",
+          "downloadAttachments": false
+        }
+      },
+      "id": "5caa3fa4-f471-43de-b4ea-d6cea4ae79a2",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        992,
+        304
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## Solicitações por e-mail — Gmail → HubSpot\nBloco 1. Template público inativo, sem credenciais. Configure somente em ambiente de teste.",
+        "height": 273.91,
+        "width": 366.910001
+      },
+      "id": "23ef0e9b-6235-4509-96eb-a02b32028f0e",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        144,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "readStatus": "unread"
+        }
+      },
+      "id": "728844ba-2274-4226-a7ad-52728155245c",
+      "name": "Gmail1",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        368,
+        400
+      ],
+      "alwaysOutputData": false,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0,30 8-18 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "ce97bfea-4f64-43ca-9e54-e06f67c75948",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        400
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail').item.json.id }}"
+      },
+      "id": "f4e4dd5a-9944-4996-ba78-840b5cee3f73",
+      "name": "Gmail2",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        304
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"dealname\": \"{{ $json.from.value[0].name }} - {{ $json.subject }}\",\n    \"nome_da_solicitacao\": \"{{ $json.subject }}\",\n    \"data_e_hora_da_solicitacao\": \"{{ $('Gmail1').item.json.internalDate }}\",\n    \"createdate\": \"{{ $('Gmail1').item.json.internalDate }}\",\n    \"descricao_da_solicitacao\": \"{{ ($json.text).replace(/[\\n\\r\\t\\\\\"\":;]+/g, ' ').replace(/\\s{2,}/g, ' ').trim() }}\",\n    \"nome_do_solicitante\": \"{{ $json.from.value[0].name }}\",\n    \"pipeline\": \"910003\",\n    \"dealstage\": \"910004\",\n    \"hubspot_owner_id\":\"910005\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1168,
+        304
+      ],
+      "id": "0c4daab2-551a-482c-a1a5-5707a0c07411",
+      "name": "Criar Solicitação",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const item of items) {\n  const emailData = item.json;\n\n  const fromField = emailData.From || '';\n\n  // Expressão regular para extrair o e-mail do campo From\n  const emailMatch = fromField.match(/<([^>]+)>/);\n  const senderEmail = emailMatch ? emailMatch[1].trim() : fromField.trim();\n\n  // Verifica se o domínio do e-mail é desejado\n  const isMatched = senderEmail.endsWith('@cliente-a.example') || senderEmail.endsWith('@cliente-b.example');\n\n  // Adiciona campos ao JSON original\n  const enrichedJson = {\n    ...emailData,\n    senderEmail,\n    matchedEmails: isMatched ? [senderEmail] : [],\n    matched: isMatched\n  };\n\n  output.push({ json: enrichedJson });\n}\n\nreturn output;\n\n\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        304
+      ],
+      "id": "aa304fdb-282c-4ca7-a3ce-003067474af5",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        688,
+        560
+      ],
+      "id": "3104a493-e7af-414c-931d-035eea2e05ee",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ \n  $json.Subject.includes(\"ENC:\") || \n  $json.Subject.includes(\"enc:\") ||\n  $json.Subject.includes(\"Fwd:\") || \n  $json.Subject.includes(\"FWD:\") ||\n  $json.Subject.includes(\"RES:\") || \n  $json.Subject.includes(\"Res:\") ||\n  $json.Subject.includes(\"Re:\")  ||\n  $json.Subject.includes(\"RE:\")\n}}",
+              "operation": "notContains",
+              "value2": "true"
+            },
+            {
+              "value1": "={{ $json.matched }}",
+              "operation": "contains",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "317f4937-3725-4501-85b6-25a7bd52e12b",
+      "name": "Checagem 01",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        768,
+        304
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        560
+      ],
+      "id": "bdf011f7-f67e-454f-b475-99e10ae42ebb",
+      "name": "No Operation, do nothing"
+    }
+  ],
+  "connections": {
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Criar Solicitação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Solicitação": {
+      "main": [
+        [
+          {
+            "node": "Gmail2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Checagem 01",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checagem 01": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

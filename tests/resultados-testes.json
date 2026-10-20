@@ -1,0 +1,30 @@
+{
+  "escopo": "Testes locais de JavaScript e estrutura JSON, sem n8n ou sistemas reais",
+  "total": 6,
+  "testes": [
+    {
+      "teste": "Sintaxe dos corpos JavaScript",
+      "resultado": "passou"
+    },
+    {
+      "teste": "Estrutura pública e conexões válidas",
+      "resultado": "passou"
+    },
+    {
+      "teste": "Extrai remetente em Nome <email> e preserva dados",
+      "resultado": "passou"
+    },
+    {
+      "teste": "Aceita segundo domínio demonstrativo e endereço direto",
+      "resultado": "passou"
+    },
+    {
+      "teste": "Rejeita domínio fora da lista e trata ausência de From",
+      "resultado": "passou"
+    },
+    {
+      "teste": "Comparação preserva a distinção de caixa do original",
+      "resultado": "passou"
+    }
+  ]
+}

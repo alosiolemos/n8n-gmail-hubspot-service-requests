@@ -1,0 +1,15 @@
+{
+  "repo": "n8n-gmail-hubspot-service-requests",
+  "title": "Solicitações por e-mail — Gmail → HubSpot",
+  "image": "solicitacoes-email-hubspot.png",
+  "variant": "solicitacoes",
+  "total": 10,
+  "disabled": 5,
+  "codes": [
+    {
+      "name": "Code",
+      "path": "code/01-code.js",
+      "legacy": false
+    }
+  ]
+}
