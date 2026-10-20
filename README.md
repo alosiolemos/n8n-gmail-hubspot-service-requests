@@ -26,9 +26,8 @@ O cron recebido é **0,30 8-18 * * 1-5**: horários de meia em meia hora, entre 
 
 ## Screenshot
 
-![Automação Gmail para solicitações no HubSpot](assets/screenshots/solicitacoes-email-hubspot.png)
+![Automação Gmail para solicitações no HubSpot](assets/screenshots/solicitacoes-email-hubspot.png.png)
 
-Envie **solicitacoes-email-hubspot.png** para **assets/screenshots/**. O link acima já está preparado.
 
 ## Material disponível
 
